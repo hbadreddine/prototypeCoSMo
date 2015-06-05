@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+  <head>
+     <!-- Load Leaflet from CDN-->
+	 <title>Prototype</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" />
+	<link rel="stylesheet" href="static/css/L.Control.ZoomBox.css" />
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+	<script src="static/js/L.Control.ZoomBox.min.js"></script>
+
+    <!-- we encourage you to replace 'latest' with a hardcode version number (like '1.0.0-rc.7') in production applications -->
+    <script src="//cdn.jsdelivr.net/leaflet.esri/latest/esri-leaflet.js"></script>
+	
+    <style>
+      html, body {
+        width : 100%;
+        height : 100%;
+      }
+	  #map {
+        width : 80%;
+        height : 100%;
+      }
+	  
+	  
+    </style>
+  </head>
+  <body>
+				
+			<style>
+			#find {
+				position: absolute;
+				top: 70px;
+				right: 10px;
+				z-index: 10;
+				background: white;
+				padding: 1em;
+			}
+			#basemaps-wrapper {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				z-index: 10;
+				background: white;
+				padding: 1em;
+			}
+			
+			#selectedFeatures {
+				position: absolute;
+				top: 300px;
+				right: 10px;
+				z-index: 10;
+				background: white;
+				padding: 1em;
+			}
+		</style>			
+						
+    <div id="map"></div>
+	
+	<div id="find" class="leaflet-bar">
+		
+			Chercher :
+					<input id="searchText" class="leaflet-bar" data-clear-btn="true"/><br/>
+																<script>
+													function Choix(form) {
+															i = form.couche.selectedIndex; 
+															if (i == 0) { return; } 
+															switch (i) { 
+																	case 1 : var txt = new Array ('id','equipement','','',''); 
+																	break; 
+																	case 2 : var txt = new Array ('full_id','osm_id','name','wikipedia','ref_INSEE'); 
+																	break; 
+																	case 3 : var txt = new Array ('full_id','osm_id','name','wikipedia','ref_INSEE'); 
+																	break; } 
+															form.couche.selectedIndex = i; 
+															for (i=0;i<5;i++) { 
+																	
+																	form.champs.options[i+1].text=txt[i];
+																	form.champs.options[i+1].value=txt[i];				
+																	}
+
+															} 
+															
+													</script>
+
+													<br/>
+													<form>
+													Couche :<SELECT NAME="couche" id="couche" onChange='Choix(this.form)'> 
+													<OPTION selected="selected">-- Choisissez une couche ---</OPTION> 
+													<OPTION value='0'>equipement</OPTION> 
+													<OPTION value='2'>ile de france</OPTION> 
+													<OPTION value='1'>commune</OPTION> 
+													</SELECT>
+													<br/><br/>
+
+													Champs :<SELECT NAME="champs" id="champs">
+													<OPTION>-- Choisissez un champs ---</OPTION>
+													<OPTION></OPTION> 
+													<OPTION></OPTION> 
+													<OPTION></OPTION> 
+													<OPTION></OPTION> 
+													<OPTION></OPTION> 
+													</SELECT>
+													</form><br/>
+		
+		
+		<button id="goBtn" onClick="goBtn()" class="leaflet-bar">OK</button>
+		<button id="sup" onClick="sup()" class="leaflet-bar">Annuler</button>
+	</div>
+	
+	<div id="basemaps-wrapper" class="leaflet-bar">
+		Fonds de cartes:<select name="basemaps" id="basemaps">
+		<option value="Topographic">Topographic<options>
+		<option value="Streets">Streets</option>
+		<option value="NationalGeographic">National Geographic<options>
+		<option value="Oceans">Oceans<options>
+		<option value="Gray">Gray<options>
+		<option value="DarkGray">Dark Gray<options>
+		<option value="Imagery">Imagery<options>
+		<option value="ShadedRelief">Shaded Relief<options>
+	  </select>
+	</div>
+	<div id="selectedFeatures" class="leaflet-bar">Veuillez selectionner un objet sur la carte</div>
+	
+    <script>
+	
+      //initialisation de map
+	  var map = L.map('map').setView([48.8566140, 2.3522219], 11);
+	  
+      var layer = L.esri.basemapLayer("Topographic").addTo(map);
+	  var layerLabels;
+
+	//la fonction qui gère le changement du fond de cartes
+	  function setBasemap(basemap) {
+		if (layer) {
+		  map.removeLayer(layer);
+		}
+		layer = L.esri.basemapLayer(basemap);
+		map.addLayer(layer);
+		if (layerLabels) {
+		  map.removeLayer(layerLabels);
+		}
+
+		if (basemap === 'ShadedRelief' || basemap === 'Oceans' || basemap === 'Gray' || basemap === 'DarkGray' || basemap === 'Imagery' || basemap === 'Terrain') {
+
+		  layerLabels = L.esri.basemapLayer(basemap + 'Labels');
+		  map.addLayer(layerLabels);
+		}
+	  }
+		//si l'utilisateur selectionne une couche à partir de la liste deroulante, on change le fond
+	  var basemaps = document.getElementById('basemaps');
+	  basemaps.addEventListener('change', function(){
+		setBasemap(basemaps.value);
+	  });
+	  
+	 
+	 
+	 //ajout d'un control zoom box
+	 var control = L.control.zoomBox({
+     modal: true,  // If false (default), it deactivates after each use.  
+                  // If true, zoomBox control stays active until you click on the control to deactivate.
+    // position: "topleft",                  
+    // className: "customClass"  // Class to use to provide icon instead of Font Awesome
+		});
+		map.addControl(control);
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 //ajout de nos propres layers
+	var layer1= L.esri.dynamicMapLayer('http://vm101:6080/arcgis/rest/services/prototype/prototype/MapServer', {
+		layers:[1],
+		minZoom:0,
+		maxZoom:20,
+		opacity: 0.5,
+		useCors: false
+			}).addTo(map);
+			
+			
+	 var layer2= L.esri.dynamicMapLayer('http://vm101:6080/arcgis/rest/services/prototype/prototype/MapServer', {
+		layers:[2],
+		minZoom:0,
+		maxZoom:20,
+		opacity: 0.7,
+		useCors: false
+			}).addTo(map);
+			
+	 var layer3= L.esri.dynamicMapLayer('http://vm101:6080/arcgis/rest/services/prototype/prototype/MapServer', {
+		layers:[0],
+		minZoom:0,
+		maxZoom:20,
+		opacity: 0.8,
+		useCors: false
+			}).addTo(map);
+		
+	//attribution des noms de couches qui vont apparaitre dans le menu
+	var overlayMaps = { "ile de france": layer2 , "commune": layer1, "equipement": layer3   };
+	//ajout du menu
+	L.control.layers(null,overlayMaps).addTo(map);
+	
+	
+	
+	//pour selectionner un objet sur la carte
+	var govUnits = L.esri.dynamicMapLayer('http://vm101:6080/arcgis/rest/services/prototype/prototype/MapServer', {
+        opacity: 0.9
+    });
+	govUnits.bringToBack();
+
+    var searchText = document.getElementById('searchText');
+	var couche = document.getElementById('couche');
+	var champs = document.getElementById('champs');
+	var id=0;
+	var featureCollection2;
+	//couche qui va contenir le résultat de la recherche
+	var geo=L.geoJson();
+	
+	
+    function goBtn() {
+		
+        govUnits.find().layers(couche.value).text(searchText.value).fields(champs.value)
+                .run(function(error, featureCollection, response){
+								//si l'objet à rechercher n'est pas selectionné
+								if (featureCollection.features[0].properties.gid!=id){
+									//on supprime l'ancien objet recherché
+									map.removeLayer(geo);
+									//on définit le nouveau objet et on lui attribue la couleur rouge
+									 geo = L.geoJson(featureCollection, {
+										style: { color: 'red' },
+										onEachFeature: function (feature, layer) {
+													if(couche.value==0)
+														layer.bindPopup(feature.properties.id+"<br/>"+feature.properties.equipement);
+													else if(couche.value==1)
+														layer.bindPopup(feature.properties.name+"<br/>"+feature.properties.ref_INSEE);
+													else if(couche.value==2)
+														layer.bindPopup(feature.properties.name+"<br/>"+feature.properties.ref_INSEE);
+												}
+										
+									})
+								//on rajoute l'objet à la carte	
+								geo.addTo(map);
+								id=featureCollection.features[0].properties.gid;
+								featureCollection2=featureCollection;
+								}
+								
+                });
+    }
+	
+	
+    function sup(){
+			
+			map.removeLayer(geo);
+			searchText.value ="";
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+//selection d'un objet sur la carte et affichage des infos
+	var identifiedFeature = new L.GeoJSON();
+	var identifiedFeature;
+  var pane = document.getElementById('selectedFeatures');
+
+  map.on('click', function (e) {
+    if(identifiedFeature){
+      map.removeLayer(identifiedFeature);
+      pane.innerHTML = 'Veuillez selectionner un objet sur la carte';
+    }
+    layer2.identify().on(map).at(e.latlng).run(function(error, featureCollection){
+     
+        identifiedFeature = new L.GeoJSON(featureCollection, {
+          style: {
+              color: '#5C7DB8',
+              weight: 2}
+			}).addTo(map);
+        pane.innerHTML = "Identifiant OSM :"+featureCollection.features[0].properties.osm_id+"<br/>Nom :"+featureCollection.features[0].properties.name+"<br/>Code INSEE :"+featureCollection.features[0].properties.ref_INSEE+"<br/><br/><button id='supp' onClick='supp()' class='leaflet-bar'>Annuler</button>";
+      
+    });
+  });
+	
+	
+	function supp(){
+	   map.removeLayer(identifiedFeature);
+	   pane.innerHTML = "Veuillez selectionner un objet sur la carte";
+	   }
+	
+	
+    </script>
+	
+	
+	
+	
+	
+	
+	
+  </body>
+</html>
