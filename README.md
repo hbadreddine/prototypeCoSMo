@@ -1,2 +1,2 @@
 # prototypeCoSMo
-C'est le premier prototype de visualisation de cartes 2D
+Un premier prototype de visualisation de cartes 2D
